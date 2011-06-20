@@ -1,0 +1,5 @@
+This code is written for a nanode, and will not work on an arduino with the official ethernet shield.
+
+You need these libraries:
+TimedAction http://www.arduino.cc/playground/Code/TimedAction
+EtherShield (modified version)
