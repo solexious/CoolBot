@@ -193,25 +193,6 @@ int readWater(){
   Tc_100 = (6 * TReading) + TReading / 4;    // multiply by (100 * 0.0625) or 6.25
 
   return Tc_100;
-
-  //Whole = Tc_100 / 100;  // separate off the whole and fractional portions
-  //Fract = Tc_100 % 100;
-
-  /*
-  Serial.print("Water:");
-   if (SignBit) // If its negative
-   {
-   Serial.print("-");
-   }
-   Serial.print(Whole);
-   Serial.print(".");
-   if (Fract < 10)
-   {
-   Serial.print("0");
-   }
-   Serial.print(Fract);
-   
-   Serial.print("\n");*/
 }
 
 int readRoom(){
@@ -253,25 +234,6 @@ int readRoom(){
   Tc_100 = (6 * TReading) + TReading / 4;    // multiply by (100 * 0.0625) or 6.25
 
   return Tc_100;
-  /*
-  Whole = Tc_100 / 100;  // separate off the whole and fractional portions
-   Fract = Tc_100 % 100;
-   
-   
-   Serial.print("Room:");
-   if (SignBit) // If its negative
-   {
-   Serial.print("-");
-   }
-   Serial.print(Whole);
-   Serial.print(".");
-   if (Fract < 10)
-   {
-   Serial.print("0");
-   }
-   Serial.print(Fract);
-   
-   Serial.print("\n");*/
 }
 
 void setup(void) {
@@ -307,5 +269,3 @@ void loop(void) {
   checkRoomTemprature.check();
   heartBeat.check();
 }
-
-
