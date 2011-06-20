@@ -67,20 +67,23 @@ void checkLazor(){
   int lazor = digitalRead(2);
   //Serial.println(lazor);
   if(lazor!=laserStatus){
-    //Serial.println("lazor not match");
-    //Serial.println(laserStatus);
-    if(lazor==0){
-      // ************* SEND LAZOR ON AND START COUNTER **************
-      sendGetRequest("lazor=on");
-      lazorTimer = millis();
-    }
-    else{
-      // ************* SEND LAZOR OFF AND HOW LONG ON FOR ************
-      long lazordTime = (millis() - lazorTimer) / 1000;
-      sprintf(buffer1, "lazor=off&timeOn=%d", lazordTime);
-      sendGetRequest(buffer1);
-    }
+    delay(200);
+    if(lazor==digitalRead(2)){
+      //Serial.println("lazor not match");
+      //Serial.println(laserStatus);
+      if(lazor==0){
+        // ************* SEND LAZOR ON AND START COUNTER **************
+        sendGetRequest("lazor=on");
+        lazorTimer = millis();
+      }
+      else{
+        // ************* SEND LAZOR OFF AND HOW LONG ON FOR ************
+        long lazordTime = (millis() - lazorTimer) / 1000;
+        sprintf(buffer1, "lazor=off&timeOn=%d", lazordTime);
+        sendGetRequest(buffer1);
+      }
     laserStatus = !laserStatus;
+    }
   }
 }
 
