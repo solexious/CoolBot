@@ -99,7 +99,7 @@ void serviceWaterTemprature(){
       sendGetRequest("cooling=true");
     }
   }
-  else if(reading<2000){
+  else if(reading<1900){
     digitalWrite(3,LOW);
     if(relay==1){
       relay = 0;
@@ -119,7 +119,7 @@ void serviceWaterTemprature(){
 }
 
 void serviceRoomTemprature(){
-  int reading = readWater();
+  int reading = readRoom();
   //Serial.print("Room:");
   //Serial.println(reading);
   if(reading!=oldRoomReading){
