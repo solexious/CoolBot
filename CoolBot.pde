@@ -12,19 +12,8 @@ static uint8_t myip[4] = {
 // web server (=web server is on the same lan as this host)
 static uint8_t gwip[4] = {
   172,31,24,1};
-
-//============================================================================================================
-// Pachube declarations
-//============================================================================================================
 #define PORT 80                   // HTTP
 
-// the etherShield library does not really support sending additional info in a get request
-// here we fudge it in the host field to add the API key
-// Http header is
-// Host: <HOSTNAME>
-// X-PachubeApiKey: xxxxxxxx
-// User-Agent: Arduino/1.0
-// Accept: text/html
 #define HOSTNAME "babbage"      // API key
 static uint8_t websrvip[4] = {
   172,31,24,101};	// Get pachube ip by DNS call
@@ -67,7 +56,7 @@ void checkLazor(){
   int lazor = digitalRead(2);
   //Serial.println(lazor);
   if(lazor!=laserStatus){
-    delay(200);
+    delay(1000);
     if(lazor==digitalRead(2)){
       //Serial.println("lazor not match");
       //Serial.println(laserStatus);
