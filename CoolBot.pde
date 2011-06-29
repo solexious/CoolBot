@@ -49,7 +49,7 @@ TimedAction heartBeat = TimedAction(300000,beat);
 TimedAction checkLazorStatus = TimedAction(1000,checkLazor);
 
 void beat(){
-  sendGetRequest("beat");
+  sendGetRequest("beat=true");
 }
 
 void checkLazor(){
@@ -249,7 +249,7 @@ void setup(void) {
   es.ES_client_set_gwip(gwip);  // e.g internal IP of dsl router
   es.ES_client_set_wwwip(websrvip);
   delay(1000);
-  sendGetRequest("coolBotStartingUp");
+  sendGetRequest("coolBotStartingUp=true");
 }
 
 void loop(void) {
