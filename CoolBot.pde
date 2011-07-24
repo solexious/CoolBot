@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 static uint8_t mymac[6] = {
-  0x54,0x55,0x58,0x10,0x00,0x25};
+  0x54,0x55,0x55,0x10,0x01,0x21};
 static uint8_t myip[4] = {
   172,31,24,55};
 // Default gateway. The ip address of your DSL router. It can be set to the same as
