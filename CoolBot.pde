@@ -163,7 +163,18 @@ int readWater(){
   ds1.select(addr);
   ds1.write(0x44,1);         // start conversion, with parasite power on at the end
 
-  delay(750);     // maybe 750ms is enough, maybe not
+  long readDelayMillis = millis();
+  
+  while((millis() - readDelayMillis)<750){
+    
+    int moo = 0;
+    while(moo<100){
+      es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
+      ++moo;
+    }
+  }
+      
+  //delay(750);     // maybe 750ms is enough, maybe not
   // we might do a ds.depower() here, but the reset will take care of it.
 
   present = ds1.reset();
@@ -204,7 +215,17 @@ int readRoom(){
   ds2.select(addr);
   ds2.write(0x44,1);         // start conversion, with parasite power on at the end
 
-  delay(750);     // maybe 750ms is enough, maybe not
+  long readDelayMillis = millis();
+  
+  while((millis() - readDelayMillis)<750){
+    
+    int moo = 0;
+    while(moo<100){
+      es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
+      ++moo;
+    }
+  }
+  //delay(750);     // maybe 750ms is enough, maybe not
   // we might do a ds.depower() here, but the reset will take care of it.
 
   present = ds2.reset();
