@@ -3,6 +3,7 @@
 #include <TimedAction.h>
 #include <OneWire.h>
 #include <stdio.h>
+#include <avr/wdt.h>
 
 
 byte mac[] = { 
@@ -242,6 +243,8 @@ void setup(void) {
   
   Ethernet.begin(mac, ip);
   
+  wdt_enable(WDTO_8S);
+  
   delay(1000);
   sendGetRequest("coolBotStartingUp=true");
 }
@@ -251,10 +254,16 @@ void loop(void) {
   while(client.available()) {
     char c = client.read();
     Serial.print(c);
+    wdt_reset();
   }
   
+  wdt_reset();
   checkWaterTemprature.check();
+  wdt_reset();
   checkLazorStatus.check();
+  wdt_reset();
   checkRoomTemprature.check();
+  wdt_reset();
   heartBeat.check();
+  wdt_reset();
 }
