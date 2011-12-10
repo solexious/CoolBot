@@ -33,10 +33,12 @@ char buffer1[50];
 char buffer2[50];
 char buffer3[50];
 long timeOut = 0;
+int lazorPin = 2;
+int relayPin = 3;
 
 // DS18S20 Temperature chip i/o
 OneWire ds1(5);  // on pin 10
-OneWire ds2(4);  // on pin 10
+OneWire ds2(6);  // on pin 10
 
 TimedAction checkWaterTemprature = TimedAction(5000,serviceWaterTemprature);
 TimedAction checkRoomTemprature = TimedAction(20000,serviceRoomTemprature);
@@ -48,11 +50,11 @@ void beat(){
 }
 
 void checkLazor(){
-  int lazor = digitalRead(2);
+  int lazor = digitalRead(lazorPin);
   //Serial.println(lazor);
   if(lazor!=laserStatus){
     delay(1000);
-    if(lazor==digitalRead(2)){
+    if(lazor==digitalRead(lazorPin)){
       //Serial.println("lazor not match");
       //Serial.println(laserStatus);
       if(lazor==0){
@@ -79,7 +81,7 @@ void serviceWaterTemprature(){
   //Serial.print("Water:");
   //Serial.println(reading);
   if(reading>2200){
-    digitalWrite(3,HIGH);
+    digitalWrite(relayPin,HIGH);
     if(relay==0){
       relay = 1;
       // **************** SEND COOLING ON **************
@@ -87,7 +89,7 @@ void serviceWaterTemprature(){
     }
   }
   else if(reading<1900){
-    digitalWrite(3,LOW);
+    digitalWrite(relayPin,LOW);
     if(relay==1){
       relay = 0;
       // **************** SEND COOLING OFF **************
@@ -246,7 +248,7 @@ void setup(void) {
 
 void loop(void) {
   
-  if (client.available()) {
+  while(client.available()) {
     char c = client.read();
     Serial.print(c);
   }
