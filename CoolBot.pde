@@ -1,32 +1,27 @@
+#include <SPI.h>
+#include <Ethernet.h>
 #include <TimedAction.h>
 #include <OneWire.h>
-#include <EtherShield.h>
 #include <stdio.h>
 
-static uint8_t mymac[6] = {
-  0x54,0x55,0x55,0x10,0x01,0x21};
-static uint8_t myip[4] = {
-  172,31,24,55};
-// Default gateway. The ip address of your DSL router. It can be set to the same as
-// websrvip the case where there is no default GW to access the
-// web server (=web server is on the same lan as this host)
-static uint8_t gwip[4] = {
-  172,31,24,1};
-#define PORT 80                   // HTTP
 
-#define HOSTNAME "babbage"      // API key
-static uint8_t websrvip[4] = {
-  172,31,24,101};	// Get pachube ip by DNS call
-#define WEBSERVER_VHOST "babbage"
-#define HTTPPATH "/?"      // Set your own feed ID here
+byte mac[] = { 
+  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+// assign an IP address for the controller:
+byte ip[] = { 
+  172,31,24,55 };
+byte gateway[] = {
+  172,31,24,1};	
+byte subnet[] = { 
+  255, 255, 255, 0 };
 
-static uint8_t resend=0;
-static int8_t dns_state=0;
+//  The address of the server you want to connect to (pachube.com):
+byte server[] = { 
+  172,31,24,101 }; 
 
-EtherShield es=EtherShield();
+// initialize the library instance:
+Client client(server, 8022);
 
-#define BUFFER_SIZE 550
-static uint8_t buf[BUFFER_SIZE+1];
 
 int relay = 0;
 int oldWaterReading;
@@ -68,6 +63,9 @@ void checkLazor(){
       else{
         // ************* SEND LAZOR OFF AND HOW LONG ON FOR ************
         long lazordTime = (millis() - lazorTimer) / 1000;
+        if(lazordTime<4){
+          lazordTime = 0;
+        }
         sprintf(buffer1, "lazor=off&timeOn=%d", lazordTime);
         sendGetRequest(buffer1);
       }
@@ -120,30 +118,28 @@ void serviceRoomTemprature(){
 
 }
 
-void browserresult_callback(uint8_t statuscode,uint16_t datapos){
-  waitingForPing = 0;
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-}
-
 void sendGetRequest(char* message){
   Serial.println(message);
-  es.ES_client_browse_url(PSTR(HTTPPATH), message, PSTR(HOSTNAME), &browserresult_callback); 
-  waitingForPing = 1;
-  timeOut = 0;
-  while((waitingForPing) && (timeOut<99999)){
-    es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-    ++timeOut;
+  if(!client.connected()){
+    client.connect();
   }
-  //Serial.println(timeOut);
+  
+  if(client.connected()){
+    
+    client.print("GET /?");
+    client.print(message);
+    client.println(" HTTP/1.0");
+    client.println();
+    
+    Serial.println("sent data");
+    
+  }
+  else{
+    
+    Serial.print("ERROR CONNECTING");
+    
+  }
+  
 }
 
 int readWater(){
@@ -165,14 +161,7 @@ int readWater(){
 
   long readDelayMillis = millis();
   
-  while((millis() - readDelayMillis)<750){
-    
-    int moo = 0;
-    while(moo<100){
-      es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-      ++moo;
-    }
-  }
+  delay(750);
       
   //delay(750);     // maybe 750ms is enough, maybe not
   // we might do a ds.depower() here, but the reset will take care of it.
@@ -215,17 +204,8 @@ int readRoom(){
   ds2.select(addr);
   ds2.write(0x44,1);         // start conversion, with parasite power on at the end
 
-  long readDelayMillis = millis();
   
-  while((millis() - readDelayMillis)<750){
-    
-    int moo = 0;
-    while(moo<100){
-      es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-      ++moo;
-    }
-  }
-  //delay(750);     // maybe 750ms is enough, maybe not
+  delay(750);     // maybe 750ms is enough, maybe not
   // we might do a ds.depower() here, but the reset will take care of it.
 
   present = ds2.reset();
@@ -257,26 +237,20 @@ void setup(void) {
   pinMode(2, INPUT);
   digitalWrite(2,HIGH);
   digitalWrite(3,LOW);
-  // Initialise SPI interface
-  es.ES_enc28j60SpiInit();
-
-  // initialize ENC28J60
-  es.ES_enc28j60Init(mymac,8);
-
-  //init the ethernet/ip layer:
-  es.ES_init_ip_arp_udp_tcp(mymac, myip, PORT);
-
-  // init the web client:
-  es.ES_client_set_gwip(gwip);  // e.g internal IP of dsl router
-  es.ES_client_set_wwwip(websrvip);
+  
+  Ethernet.begin(mac, ip);
+  
   delay(1000);
   sendGetRequest("coolBotStartingUp=true");
 }
 
 void loop(void) {
-  // handle ping and wait for a tcp packet - calling this routine powers the sending and receiving of data
-  es.ES_packetloop_icmp_tcp(buf,es.ES_enc28j60PacketReceive(BUFFER_SIZE, buf));
-
+  
+  if (client.available()) {
+    char c = client.read();
+    Serial.print(c);
+  }
+  
   checkWaterTemprature.check();
   checkLazorStatus.check();
   checkRoomTemprature.check();
