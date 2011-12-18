@@ -4,7 +4,9 @@
 #include <OneWire.h>
 #include <stdio.h>
 #include <avr/wdt.h>
+#include <NewSoftSerial.h>
 
+NewSoftSerial mySerial(8, 7);
 
 byte mac[] = { 
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
@@ -42,9 +44,89 @@ OneWire ds1(5);  // on pin 10
 OneWire ds2(6);  // on pin 10
 
 TimedAction checkWaterTemprature = TimedAction(5000,serviceWaterTemprature);
-TimedAction checkRoomTemprature = TimedAction(20000,serviceRoomTemprature);
+TimedAction checkRoomTemprature = TimedAction(5000,serviceRoomTemprature);
 TimedAction heartBeat = TimedAction(300000,beat);
 TimedAction checkLazorStatus = TimedAction(1000,checkLazor);
+TimedAction updateDisplayTimed = TimedAction(1500,updateDisplay);
+
+
+void setup(void) {
+  // initialize inputs/outputs
+  // start serial port
+  mySerial.begin(9600);
+  Serial.begin(9600);
+  pinMode(3, OUTPUT);
+  pinMode(2, INPUT);
+  digitalWrite(2,HIGH);
+  digitalWrite(3,LOW);
+  
+  Ethernet.begin(mac, ip);
+  writeToScreen("--NOW  BOOTING----COOLBOT V0.9--");
+  
+  //wdt_enable(WDTO_8S);
+  
+  delay(1000);
+  sendGetRequest("coolBotStartingUp=true");
+  checkWaterTemprature.enable();
+  checkLazorStatus.enable();
+  checkRoomTemprature.enable();
+  heartBeat.enable();
+  updateDisplayTimed.enable();
+}
+
+void loop(void) {
+  
+  checkWaterTemprature.check();
+  checkLazorStatus.check();
+  checkRoomTemprature.check();
+  heartBeat.check();
+  updateDisplayTimed.check();
+}
+
+void updateDisplay(){
+  
+  char dipMes[50];
+  
+  
+  //sprintf(dipMes, "WTR:%d RM:%d", waterFloat , roomFloat);
+  //sprintf(dipMes,"%2d.%01d",oldWaterReading/100,oldWaterReading%100);
+  sprintf(dipMes,"WTR:%2d.%01d RM:%2d.%01d",oldWaterReading/100,(oldWaterReading%100)/10, oldRoomReading/100,(oldRoomReading%100)/10);
+  //sprintf(dipMes, "%2.2f", oldWaterReading/100);
+  
+  
+  mySerial.print(0xFE,BYTE);
+  mySerial.print(0x01,BYTE);
+  delay(1);
+  mySerial.print(dipMes);
+  
+  mySerial.print("COOL:");
+  if(relay){
+    mySerial.print("ON  ");
+  }
+  else{
+    mySerial.print("OFF ");
+  }
+  
+  mySerial.print("LZR:");
+  if(!laserStatus){
+    mySerial.print("ON");
+  }
+  else{
+    mySerial.print("OFF");
+  }
+  
+  //Serial.println(dipMes);
+  
+}
+
+void writeToScreen(char* msg){
+
+  mySerial.print(0xFE,BYTE);
+  mySerial.print(0x01,BYTE);
+  delay(2);
+  mySerial.print(msg);
+
+}
 
 void beat(){
   sendGetRequest("beat=true");
@@ -78,9 +160,10 @@ void checkLazor(){
 }
 
 void serviceWaterTemprature(){
+  //Serial.print("Water:");
   int reading = readWater();
   //Serial.print("Water:");
-  //Serial.println(reading);
+  Serial.println(reading);
   if(reading>2200){
     digitalWrite(relayPin,HIGH);
     if(relay==0){
@@ -109,8 +192,8 @@ void serviceWaterTemprature(){
 }
 
 void serviceRoomTemprature(){
-  int reading = readRoom();
   //Serial.print("Room:");
+  int reading = readRoom();
   //Serial.println(reading);
   if(reading!=oldRoomReading){
     // ****************** SEND NEW TEMPRATURE ***************
@@ -123,23 +206,21 @@ void serviceRoomTemprature(){
 
 void sendGetRequest(char* message){
   Serial.println(message);
-  if(!client.connected()){
-    client.connect();
-  }
-  
-  if(client.connected()){
+  if(client.connect()){
     
     client.print("GET /?");
     client.print(message);
     client.println(" HTTP/1.0");
     client.println();
+    client.flush();
+    client.stop();
     
     Serial.println("sent data");
     
   }
   else{
     
-    Serial.print("ERROR CONNECTING");
+    Serial.println("ERROR CONNECTING");
     
   }
   
@@ -230,40 +311,4 @@ int readRoom(){
   Tc_100 = (6 * TReading) + TReading / 4;    // multiply by (100 * 0.0625) or 6.25
 
   return Tc_100;
-}
-
-void setup(void) {
-  // initialize inputs/outputs
-  // start serial port
-  Serial.begin(9600);
-  pinMode(3, OUTPUT);
-  pinMode(2, INPUT);
-  digitalWrite(2,HIGH);
-  digitalWrite(3,LOW);
-  
-  Ethernet.begin(mac, ip);
-  
-  wdt_enable(WDTO_8S);
-  
-  delay(1000);
-  sendGetRequest("coolBotStartingUp=true");
-}
-
-void loop(void) {
-  
-  while(client.available()) {
-    char c = client.read();
-    Serial.print(c);
-    wdt_reset();
-  }
-  
-  wdt_reset();
-  checkWaterTemprature.check();
-  wdt_reset();
-  checkLazorStatus.check();
-  wdt_reset();
-  checkRoomTemprature.check();
-  wdt_reset();
-  heartBeat.check();
-  wdt_reset();
 }
