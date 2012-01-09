@@ -60,8 +60,18 @@ void setup(void) {
   digitalWrite(2,HIGH);
   digitalWrite(3,LOW);
   
-  Ethernet.begin(mac, ip);
+  // Reset screen
+  delay(2000);
+  mySerial.print(0x7C, BYTE);
+  mySerial.print(4, BYTE);
+  mySerial.print(0x7C, BYTE);
+  mySerial.print(6, BYTE);
+  
+  delay(1000);
+  mySerial.print(".");
+  
   writeToScreen("--NOW  BOOTING----COOLBOT V0.9--");
+  Ethernet.begin(mac, ip);
   
   //wdt_enable(WDTO_8S);
   
@@ -81,6 +91,8 @@ void loop(void) {
   checkRoomTemprature.check();
   heartBeat.check();
   updateDisplayTimed.check();
+  serviceWaterTemprature();
+  serviceRoomTemprature();
 }
 
 void updateDisplay(){
