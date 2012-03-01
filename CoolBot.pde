@@ -178,7 +178,7 @@ void checkLazor(){
         }
         totalLazordTime += lazordTime;
         EEPROM_writeAnything(0, totalLazordTime);
-        sprintf(buffer1, "lazor=off&timeOn=%d", totalLazordTime);
+        sprintf(buffer1, "lazor=off&timeOn=%ld", totalLazordTime);
         sendGetRequest(buffer1);
       }
     laserStatus = !laserStatus;
