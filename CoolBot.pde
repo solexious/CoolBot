@@ -11,7 +11,7 @@
 NewSoftSerial mySerial(10, 8);
 
 byte mac[] = { 
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+  0x00, 0x30, 0xBD, 0xB2, 0xFD, 0x59};
 // assign an IP address for the controller:
 byte ip[] = { 
   172,31,24,55 };
@@ -22,7 +22,7 @@ byte subnet[] = {
 
 //  The address of the server you want to connect to (pachube.com):
 byte server[] = { 
-  172,31,24,101 }; 
+  172,31,24,5 }; 
 
 // initialize the library instance:
 Client client(server, 8022);
@@ -50,7 +50,7 @@ OneWire ds2(6);  // on pin 10
 OneWire ds3(7);  // on pin 10
 
 TimedAction checkWaterTemprature = TimedAction(5000,serviceWaterTemprature);
-TimedAction checkRoomTemprature = TimedAction(5000,serviceRoomTemprature);
+TimedAction checkRoomTemprature = TimedAction(10000,serviceRoomTemprature);
 TimedAction checkOutflowTemprature = TimedAction(5000,serviceOutflowTemprature);
 TimedAction heartBeat = TimedAction(300000,beat);
 TimedAction checkLazorStatus = TimedAction(1000,checkLazor);
@@ -76,7 +76,13 @@ void setup(void) {
   mySerial.print(0x7C, BYTE);
   mySerial.print(6, BYTE);
   
-  EEPROM_readAnything(0, totalLazordTime);
+  //totalLazordTime = 0;
+  
+  EEPROM_writeAnything(0, totalLazordTime);
+  
+  //delay(100);
+  
+  Serial.print(EEPROM_readAnything(0, totalLazordTime));
   
   delay(1000);
   mySerial.print(".");
@@ -104,8 +110,9 @@ void loop(void) {
   checkOutflowTemprature.check();
   heartBeat.check();
   updateDisplayTimed.check();
-  serviceWaterTemprature();
-  serviceRoomTemprature();
+  //serviceWaterTemprature();
+  //serviceRoomTemprature();
+  
 }
 
 void updateDisplay(){
